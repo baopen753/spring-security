@@ -26,7 +26,7 @@ public class SecurityConfig {
         http
                 //  .authorizeHttpRequests(request -> request.anyRequest().authenticated())
                 .authorizeHttpRequests(request -> request.requestMatchers("/myAccount", "/myCard", "/myLoans", "/myBalance").authenticated()  // these are protected endpoints
-                        .requestMatchers("/hello", "/notices", "/contact").permitAll())
+                        .requestMatchers("/hello", "/notices").permitAll())
                 .formLogin(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults());
         return http.build();

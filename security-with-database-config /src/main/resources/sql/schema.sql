@@ -12,3 +12,10 @@ create table authorities (
 );
 
 create unique index ix_auth_username on authorities (username,authority);
+
+create table account (
+    id int not null primary key auto_increment,
+    email varchar(45) not null,
+    password varchar(128) not null,
+    role varchar(45) not null
+);
