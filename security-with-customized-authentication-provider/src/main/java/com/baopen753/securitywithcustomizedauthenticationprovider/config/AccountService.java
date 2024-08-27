@@ -1,38 +1,39 @@
-package com.baopen753.securitywithcustomizedauthenticationprovider.service;
+package com.baopen753.securitywithcustomizedauthenticationprovider.config;
 
 import com.baopen753.securitywithcustomizedauthenticationprovider.model.Account;
 import com.baopen753.securitywithcustomizedauthenticationprovider.repository.AccountRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class MyUserDetailsService implements UserDetailsService {
+@RequiredArgsConstructor    // create a constructor with final properties
+public class AccountService implements UserDetailsService {
 
-    @Autowired
-    private AccountRepository accountRepository;
-
+    private final AccountRepository accountRepository;
 
     /**
      * @param username the username identifying the user whose data is required.
-     * @return
-     * @throws UsernameNotFoundException
+     *  @return
+     *  @throws UsernameNotFoundException
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Account account = accountRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User details cannot find for the username: " + username));
-        List<GrantedAuthority> grantedAuthorityList = List.of(new SimpleGrantedAuthority(account.getRole()));
-        return new User(account.getUsername(), account.getPassword(), grantedAuthorityList);
-    }
-
-    public Account createAccount(Account account) {
-        return accountRepository.save(account);
+        Account account = accountRepository.findAccountByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Not found account with username: " + username));
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(account.getRole()));
+        return new User(account.getUsername(), account.getPassword(), authorities);
     }
 }
+
+
+
+

@@ -1,10 +1,8 @@
 package com.baopen753.securitywithcustomizedauthenticationprovider.config;
 
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -15,16 +13,16 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-@Profile("!prod")
+@Profile("prod")
 @RequiredArgsConstructor
-public class MyUsernamePasswordAuthenticationProvider implements AuthenticationProvider {
+public class MyUsernamePasswordAuthenticationProviderProdProfile implements AuthenticationProvider {
 
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
-
-    /**
-     * @param authentication the authentication request object.
+    /** This method is only used in test-production environment. Therefore, it doesn't need to check password
+     *
+     * @param authentication the authentication request object. 
      * @return
      * @throws AuthenticationException
      */
@@ -33,21 +31,15 @@ public class MyUsernamePasswordAuthenticationProvider implements AuthenticationP
         String username = authentication.getName();
         String password = authentication.getCredentials().toString();
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        if (passwordEncoder.matches(password, userDetails.getPassword())) {
-            return new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
-        } else {
-            throw new BadCredentialsException("Bad credentials");
-        }
+        return new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
     }
 
-
-
     /**
-     * @param authentication
+     * @param authentication 
      * @return
      */
     @Override
     public boolean supports(Class<?> authentication) {
-        return (UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication));
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
     }
 }
