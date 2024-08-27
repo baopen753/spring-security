@@ -32,6 +32,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request -> request.requestMatchers("/myAccount","/myBalance").authenticated())
                 .authorizeHttpRequests(request -> request.requestMatchers("/hello", "/register","/invalidSession").permitAll())
                 .formLogin(Customizer.withDefaults())
+                //.formLogin(flc -> flc.loginPage("/login").defaultSuccessUrl("/dashboard").failureUrl("/login?error=true").permitAll())   --> for monolithic app or Spring MVC
+                .logout(lc -> lc.logoutSuccessUrl("/login?logout=true").permitAll()
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                )
+
                 .httpBasic(hbConfig -> hbConfig.authenticationEntryPoint(new MyBasicAuthenticationEntryPoint()))
                 .exceptionHandling(ehConfig -> ehConfig.accessDeniedHandler(new MyAccessDeniedHandler()));
         return http.build();
