@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.password.CompromisedPasswordChecker;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -31,6 +30,8 @@ import org.springframework.web.filter.RequestContextFilter;
 
 import java.util.Collections;
 import java.util.List;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 
 @Configuration
@@ -82,12 +83,12 @@ public class SecurityConfig {
                 .requestMatchers("/myAccount").hasRole("USER")   // adding '*'  to make sure matcher requiring any parameters
                 .requestMatchers("/myCard/{name}").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/myCard").hasRole("USER")
-                .requestMatchers("/myBalance").hasAnyRole("ADMIN")
+                .requestMatchers("/myBalance").hasAnyRole("ADMIN","USER")
                 .requestMatchers("/myLoans").hasAnyRole("USER")
                 .requestMatchers("/user").authenticated()
                 .requestMatchers("/hello", "/contact", "/register", "/invalidSession", "/notices","/apiLogin").permitAll());
 
-        http.formLogin(Customizer.withDefaults());
+        http.formLogin(withDefaults());
         //.formLogin(flc -> flc.loginPage("/login").defaultSuccessUrl("/dashboard").failureUrl("/login?error=true").permitAll())   --> for monolithic app or Spring MVC
 
         http.logout(lc -> lc.logoutSuccessUrl("/login?logout=true").permitAll()
