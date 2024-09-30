@@ -10,7 +10,7 @@
 	</parent>
 
 	<groupId>com.baopen753</groupId>
-	<artifactId>security-with-authorization-implementing</artifactId>
+	<artifactId>security-with-jwt-configuration</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>security-with-authorization-implementing</name>
 	<description>security-with-authorization-implementing</description>
