@@ -58,13 +58,12 @@ public class JwtValidatorFilter extends OncePerRequestFilter {
                throw new BadCredentialsException("Invalid JWT received: ", ex);
            }
        }
-
         filterChain.doFilter(request, response);
     }
 
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return request.getRequestURI().endsWith("/user");   // no invoke validate filter with endpoint /user
+        return !request.getRequestURI().endsWith("/user");   // invoke validate filter with endpoint /user
     }
 }

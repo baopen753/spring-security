@@ -7,7 +7,7 @@ import com.baopen753.securitywithauthorizationimplementing.model.LoginResponseDt
 import com.baopen753.securitywithauthorizationimplementing.repository.CustomerRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,12 +27,20 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequiredArgsConstructor
+
 public class UserController {
 
     private final CustomerRepository customerRepository;
     private final AuthenticationManager authenticationManager;
     private final Environment environment;
+
+    @Autowired
+    public UserController(CustomerRepository customerRepository, AuthenticationManager authenticationManager, Environment environment) {
+        this.customerRepository = customerRepository;
+        this.authenticationManager = authenticationManager;
+        this.environment = environment;
+    }
+
 
     @GetMapping("/user")
     public ResponseEntity<Customer> getUserAfterLogin(Authentication authentication) {

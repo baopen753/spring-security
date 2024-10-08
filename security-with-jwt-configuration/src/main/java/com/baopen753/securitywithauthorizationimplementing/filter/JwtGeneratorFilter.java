@@ -46,6 +46,6 @@ public class JwtGeneratorFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return !request.getServletPath().endsWith("/user");   //   not filter with endpoint /user
+        return request.getServletPath().endsWith("/user");   //   not filter with endpoint /user
     }
 }

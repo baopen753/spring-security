@@ -20,6 +20,7 @@ public class MyUsernamePasswordAuthenticationProvider implements AuthenticationP
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
+
     /**
      * @param authentication the authentication request object.
      * @return
