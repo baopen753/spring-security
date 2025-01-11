@@ -38,6 +38,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -52,33 +53,19 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 @EnableWebSecurity
 public class ProjectSecurityConfig {
 
-
     // configure filter chain for Protocol Endpoints
-
     @Bean
     @Order(1)
-    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
-            throws Exception {
+    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
 
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer.authorizationServer();
 
-        http
-                .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-                .with(authorizationServerConfigurer, (authorizationServer) ->
-                        authorizationServer.oidc(Customizer.withDefaults())    // Enable OpenID Connect 1.0
-                )
-                .authorizeHttpRequests((authorize) ->
-                        authorize.anyRequest().authenticated()
-                )
+        http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher()).with(authorizationServerConfigurer, (authorizationServer) -> authorizationServer.oidc(Customizer.withDefaults())    // Enable OpenID Connect 1.0
+                ).authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())
 
                 // Redirect to the login page when not authenticated from the
                 // authorization endpoint
-                .exceptionHandling((exceptions) ->
-                        exceptions.defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/login"),
-                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-                        )
-                )
+                .exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"), new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
 
                 // Accepts access tokens for User Info and/or Client Registration
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
@@ -90,12 +77,8 @@ public class ProjectSecurityConfig {
     // configure filter chain for Authentication
     @Bean
     @Order(2)
-    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
-            throws Exception {
-        http
-                .authorizeHttpRequests((authorize) -> authorize
-                        .anyRequest().authenticated()
-                )
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())
                 // Form login handles the redirect to the login page from the
                 // authorization server filter chain
                 .formLogin(Customizer.withDefaults());
@@ -112,7 +95,6 @@ public class ProjectSecurityConfig {
                 .password("password")
                 .roles("USER")
                 .build();
-
         return new InMemoryUserDetailsManager(userDetails);
     }
 
@@ -120,25 +102,64 @@ public class ProjectSecurityConfig {
     // managing client credentials
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
-        RegisteredClient clientCredClient = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient clientCredClient1 = RegisteredClient.withId(UUID.randomUUID().toString())
 
                 // config client credential
                 .clientId("baopenapi")
                 .clientSecret("{noop}ShbuygVCDEDJINBHBYVtyCGVguVTVYtjCtFYIBou56E5689HBgyv6R7E56T85865")
-
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)   // the client credential sent via HTTP Basic Authorization header
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)            // specify grant type
                 .scopes(scopeConfig -> scopeConfig.addAll(List.of(OidcScopes.OPENID, "CUSTOMER", "MANAGER")))
 //                .scope(OidcScopes.OPENID)
 //                .scope(OidcScopes.PROFILE)
 //                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-
-                .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(10))
-                        .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED).build())
-
+                .tokenSettings(TokenSettings.builder()
+                        .accessTokenTimeToLive(Duration.ofMinutes(10))
+                        .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
+                        .build())
                 .build();
 
-        return new InMemoryRegisteredClientRepository(clientCredClient);
+
+        RegisteredClient authCodeClient = RegisteredClient.withId(UUID.randomUUID().toString())
+
+                // config client credential
+                .clientId("baopenclient")
+                .clientSecret("{noop}ShbuygVCDEDJINBHBYVtyCGVguVTVYtjCtFYIBou56E5689HBgyv6R7E56T85865")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)   // the client credential sent via HTTP Request Body
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)           // specify grant type
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)                // specify refresh token
+                .redirectUri("https://oauth.pstmn.io/v1/callback")
+                .scopes(scopeConfig -> scopeConfig.addAll(List.of(OidcScopes.EMAIL, OidcScopes.OPENID)))
+                .tokenSettings(TokenSettings.builder()
+                        .accessTokenTimeToLive(Duration.ofMinutes(10))
+                        .refreshTokenTimeToLive(Duration.ofHours(8))
+                        .reuseRefreshTokens(false)
+                        .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
+                        .build())
+                .build();
+
+
+        RegisteredClient pkceClient = RegisteredClient.withId(UUID.randomUUID().toString())
+
+                // config public client credential
+                .clientId("baopenpublicclient")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)                 // the client credential never shared any secret
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)           // specify grant type
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)                // specify refresh token
+                .redirectUri("https://oauth.pstmn.io/v1/callback")
+                .scopes(scopeConfig -> scopeConfig.addAll(List.of(OidcScopes.EMAIL, OidcScopes.OPENID)))
+                .clientSettings(ClientSettings.builder()
+                        .requireProofKey(true)
+                        .build())
+                .tokenSettings(TokenSettings.builder()
+                        .accessTokenTimeToLive(Duration.ofMinutes(10))
+                        .refreshTokenTimeToLive(Duration.ofHours(8))
+                        .reuseRefreshTokens(false)
+                        .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
+                        .build())
+                .build();
+
+        return new InMemoryRegisteredClientRepository(clientCredClient1, authCodeClient, pkceClient);
     }
 
     // for signing access tokens
@@ -147,10 +168,7 @@ public class ProjectSecurityConfig {
         KeyPair keyPair = generateRsaKey();
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        RSAKey rsaKey = new RSAKey.Builder(publicKey)
-                .privateKey(privateKey)
-                .keyID(UUID.randomUUID().toString())
-                .build();
+        RSAKey rsaKey = new RSAKey.Builder(publicKey).privateKey(privateKey).keyID(UUID.randomUUID().toString()).build();
         JWKSet jwkSet = new JWKSet(rsaKey);
         return new ImmutableJWKSet<>(jwkSet);
     }
