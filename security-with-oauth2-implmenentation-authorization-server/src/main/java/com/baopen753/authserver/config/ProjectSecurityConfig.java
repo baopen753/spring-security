@@ -1,6 +1,7 @@
 package com.baopen753.authserver.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.password.CompromisedPasswordChecker;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
 import java.security.KeyPair;
@@ -24,9 +25,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -43,7 +44,6 @@ import org.springframework.security.oauth2.server.authorization.settings.OAuth2T
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -87,26 +87,15 @@ public class ProjectSecurityConfig {
     }
 
 
-    // retrieve users to authenticate
-    @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails userDetails = User
-                .withUsername("user")
-                .password("password")
-                .roles("USER")
-                .build();
-        return new InMemoryUserDetailsManager(userDetails);
-    }
-
 
     // managing client credentials
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
-        RegisteredClient clientCredClient1 = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient clientCredClient = RegisteredClient.withId(UUID.randomUUID().toString())
 
                 // config client credential
                 .clientId("baopenapi")
-                .clientSecret("{noop}ShbuygVCDEDJINBHBYVtyCGVguVTVYtjCtFYIBou56E5689HBgyv6R7E56T85865")
+                .clientSecret("{noop}VxubZgAXyyTq9lGjj3qGvWNsHtE4SqTq")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)   // the client credential sent via HTTP Basic Authorization header
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)            // specify grant type
                 .scopes(scopeConfig -> scopeConfig.addAll(List.of(OidcScopes.OPENID, "CUSTOMER", "MANAGER")))
@@ -124,12 +113,12 @@ public class ProjectSecurityConfig {
 
                 // config client credential
                 .clientId("baopenclient")
-                .clientSecret("{noop}ShbuygVCDEDJINBHBYVtyCGVguVTVYtjCtFYIBou56E5689HBgyv6R7E56T85865")
+                .clientSecret("{noop}Qw3rTy6UjMnB9zXcV2pL0sKjHn5TxQqB")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)   // the client credential sent via HTTP Request Body
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)           // specify grant type
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)                // specify refresh token
                 .redirectUri("https://oauth.pstmn.io/v1/callback")
-                .scopes(scopeConfig -> scopeConfig.addAll(List.of(OidcScopes.EMAIL, OidcScopes.OPENID)))
+                .scopes(scopeConfig -> scopeConfig.addAll(List.of(OidcScopes.OPENID, OidcScopes.EMAIL)))
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(Duration.ofMinutes(10))
                         .refreshTokenTimeToLive(Duration.ofHours(8))
@@ -159,7 +148,7 @@ public class ProjectSecurityConfig {
                         .build())
                 .build();
 
-        return new InMemoryRegisteredClientRepository(clientCredClient1, authCodeClient, pkceClient);
+        return new InMemoryRegisteredClientRepository(clientCredClient, authCodeClient, pkceClient);
     }
 
     // for signing access tokens
@@ -211,4 +200,10 @@ public class ProjectSecurityConfig {
             }
         };
     }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
 }
